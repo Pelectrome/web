@@ -3,17 +3,13 @@ let characteristicsArray = []; // Declare an array to store characteristics
 
 const deviceName = "APS"; // Change this to your device's name
 const bleService = "00001995-0000-1000-8000-00805f9b34fb"; // Replace with your service UUID
-// Array of UUIDs to subscribe to
-const targetSubscribeUUIDs = [
-  // "00001997-0000-1000-8000-00805f9b34fb", // Replace with your UUIDs
-  // "00001997-0000-1000-8000-00805f9b34fb", // Example of another UUID
-  "00001999-0000-1000-8000-00805f9b34fb", // Example of another UUID
-];
 
-const ControlerCharacteristic_uuid = "00001996-0000-1000-8000-00805f9b34fb";
+const StartStopCharacteristic_uuid = "00001996-0000-1000-8000-00805f9b34fb";
 const SpeedCharacteristic_uuid = "00001997-0000-1000-8000-00805f9b34fb";
-const LightCharacteristic_uuid = "00001998-0000-1000-8000-00805f9b34fb";
-const URLCharacteristic_uuid = "00001999-0000-1000-8000-00805f9b34fb";
+const TimerCharacteristic_uuid = "00001998-0000-1000-8000-00805f9b34fb";
+const StatusCharacteristic_uuid = "00001999-0000-1000-8000-00805f9b34fb";
+// Array of UUIDs to subscribe to
+const targetSubscribeUUIDs = [StatusCharacteristic_uuid];
 
 function onDisconnected(event) {
   console.log("Device disconnected:", event.target);
@@ -27,8 +23,12 @@ function handleNotifications(event) {
   const decoder = new TextDecoder();
   const receivedData = decoder.decode(value);
   // Log the characteristic UUID and the received data to differentiate them
-  if (characteristic.uuid === "00001999-0000-1000-8000-00805f9b34fb") {
-    document.getElementById("center-image").src = receivedData;
+  if (characteristic.uuid === StatusCharacteristic_uuid) {
+    if (receivedData === "0") {
+      updateStatus(false);
+    } else if (receivedData === "1") {
+      updateStatus(true);
+    }
   }
   console.log(
     `Notification from characteristic: ${characteristic.uuid} : ${receivedData}`
@@ -316,7 +316,9 @@ function selectTime(time) {
   }
 }
 
+function startStopCommand(cmd) {
+  writeCharacteristic(StartStopCharacteristic_uuid, cmd);
+}
+
 // Call this once your page loads or when needed
 requestWakeLock();
-
-// window.onload = connectWebSocket;
