@@ -25,8 +25,8 @@
         </div>
 
         <div class="button-group">
-            <button onclick="startStopCommand('1')">Start</button>
-            <button onclick="startStopCommand('0')">Stop</button>
+            <button id="start-btn" onclick="startStopCommand('1')">Start</button>
+            <button id="stop-btn" onclick="startStopCommand('0')">Stop</button>
         </div>
 
         <div class="enable-perfume-container">
@@ -35,7 +35,7 @@
         </div>
 
         <div class="slider-container">
-            <input type="range" min="0" max="100" value="50" id="speedSlider" oninput="updateSpeed(this.value)">
+            <input type="range" min="0" max="100" value="50" id="speedSlider">
             <div class="slider-value">Speed: <span id="speedValue">50</span>%</div>
         </div>
 

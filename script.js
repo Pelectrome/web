@@ -4,7 +4,7 @@ let characteristicsArray = []; // Declare an array to store characteristics
 const deviceName = "APS"; // Change this to your device's name
 const bleService = "00001995-0000-1000-8000-00805f9b34fb"; // Replace with your service UUID
 
-const StartStopCharacteristic_uuid = "00001996-0000-1000-8000-00805f9b34fb";
+const CommandsCharacteristic_uuid = "00001996-0000-1000-8000-00805f9b34fb";
 const SpeedCharacteristic_uuid = "00001997-0000-1000-8000-00805f9b34fb";
 const TimerCharacteristic_uuid = "00001998-0000-1000-8000-00805f9b34fb";
 const StatusCharacteristic_uuid = "00001999-0000-1000-8000-00805f9b34fb";
@@ -228,12 +228,23 @@ function startWithTimer() {
   const countdownContainer = document.querySelector(".countdown-container");
   countdownContainer.style.display = "flex";
   updateCountdown(customTime * 60);
+  writeCharacteristic(TimerCharacteristic_uuid, customTime * 60); // Send the countdown time to the device
 }
 
 function updateStatus(isRunning) {
+  const startBtn = document.getElementById("start-btn");
+  const stopBtn = document.getElementById("stop-btn");
   const el = document.getElementById("statusDisplay");
+
   el.textContent = isRunning ? "Running" : "Stopped";
   el.className = isRunning ? "status-running" : "status-stopped";
+  if (isRunning) {
+    startBtn.style.backgroundColor = "#4caf50";
+    stopBtn.style.backgroundColor = "#1976d2";
+  } else {
+    startBtn.style.backgroundColor = "#1976d2";
+    stopBtn.style.backgroundColor = "#f44336";
+  }
 }
 
 let countdownInterval = null; // store interval ID globally
@@ -262,6 +273,14 @@ function updateCountdown(durationInSeconds) {
     if (remaining <= 0) {
       clearInterval(countdownInterval);
       el.textContent = "done!";
+
+      //reset the countdown display after 1 second
+      setTimeout(() => {
+        const countdownContainer = document.querySelector(
+          ".countdown-container"
+        );
+        countdownContainer.style.display = "none";
+      }, 1000);
     }
   }
 
@@ -317,8 +336,33 @@ function selectTime(time) {
 }
 
 function startStopCommand(cmd) {
-  writeCharacteristic(StartStopCharacteristic_uuid, cmd);
+  writeCharacteristic(CommandsCharacteristic_uuid, cmd);
+  if (cmd === "0") {
+    updateCountdown(0);
+  }
+}
+function togglePerfume(checked) {
+  writeCharacteristic(CommandsCharacteristic_uuid, checked ? "2" : "3");
 }
 
-// Call this once your page loads or when needed
+const slider = document.getElementById("speedSlider");
+const speedValue = document.getElementById("speedValue");
+
+slider.addEventListener("input", () => {
+  speedValue.textContent = `${slider.value}`;
+});
+
+slider.addEventListener("mouseup", () => {
+  updateSpeed(slider.value);
+});
+
+// For mobile devices (touchscreens)
+slider.addEventListener("touchend", () => {
+  updateSpeed(slider.value);
+});
+function updateSpeed(value) {
+  writeCharacteristic(SpeedCharacteristic_uuid, value);
+}
+
+// Call this once your page loads or when needed3
 requestWakeLock();
