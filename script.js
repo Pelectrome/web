@@ -8,12 +8,18 @@ const CommandsCharacteristic_uuid = "00001996-0000-1000-8000-00805f9b34fb";
 const SpeedCharacteristic_uuid = "00001997-0000-1000-8000-00805f9b34fb";
 const TimerCharacteristic_uuid = "00001998-0000-1000-8000-00805f9b34fb";
 const StatusCharacteristic_uuid = "00001999-0000-1000-8000-00805f9b34fb";
+const onLoadCharacteristic_uuid = "00001990-0000-1000-8000-00805f9b34fb";
+
 // Array of UUIDs to subscribe to
 const targetSubscribeUUIDs = [StatusCharacteristic_uuid];
 
 function onDisconnected(event) {
   console.log("Device disconnected:", event.target);
   bleDevice = null;
+  const connectionContainer = document.querySelector(".connection-container");
+  connectionContainer.style.display = "flex";
+  const connectionStatus = document.getElementById("connectionStatus");
+  connectionStatus.textContent = "Disconnected";
 }
 function handleNotifications(event) {
   const characteristic = event.target; // The characteristic that triggered the event
@@ -30,41 +36,43 @@ function handleNotifications(event) {
       updateStatus(true);
     }
   }
+
   console.log(
     `Notification from characteristic: ${characteristic.uuid} : ${receivedData}`
   );
 }
 function readCharacteristic(targetUUID) {
-  if (!characteristicsArray || characteristicsArray.length === 0) {
-    console.log("No characteristics available!");
-    return;
-  }
+  return new Promise((resolve, reject) => {
+    if (!characteristicsArray || characteristicsArray.length === 0) {
+      console.log("No characteristics available!");
+      return reject("No characteristics available!");
+    }
 
-  // Find the characteristic with the given UUID in the existing array
-  const characteristicToRead = characteristicsArray.find(
-    (char) => char.uuid === targetUUID
-  );
+    const characteristicToRead = characteristicsArray.find(
+      (char) => char.uuid === targetUUID
+    );
 
-  if (!characteristicToRead) {
-    console.log(`Characteristic with UUID ${targetUUID} not found!`);
-    return;
-  }
+    if (!characteristicToRead) {
+      const msg = `Characteristic with UUID ${targetUUID} not found!`;
+      console.log(msg);
+      return reject(msg);
+    }
 
-  // Read the value from the found characteristic
-  characteristicToRead
-    .readValue()
-    .then((value) => {
-      const decoder = new TextDecoder();
-      const receivedData = decoder.decode(value);
-
-      speedValueDisplay.textContent = `Speed : ${receivedData}`;
-      speedSlider.value = receivedData;
-
-      console.log(`Data received from UUID ${targetUUID}: ${receivedData}`);
-    })
-    .catch((error) => {
-      console.error("Error reading characteristic:", error);
-    });
+    characteristicToRead
+      .readValue()
+      .then((value) => {
+        const decoder = new TextDecoder();
+        const receivedData = decoder.decode(value);
+        console.log(
+          `Data received from UUID ${targetUUID}: ${typeof receivedData}`
+        );
+        resolve(receivedData); //  Resolve the data
+      })
+      .catch((error) => {
+        console.error("Error reading characteristic:", error);
+        reject(error); //  Reject the Promise on failure
+      });
+  });
 }
 
 // Connect Button
@@ -147,37 +155,6 @@ function connectToBLEDevice(callback) {
     });
 }
 
-function readURLCharacteristic(targetUUID) {
-  if (!characteristicsArray || characteristicsArray.length === 0) {
-    console.log("No characteristics available!");
-    return;
-  }
-
-  // Find the characteristic with the given UUID in the existing array
-  const characteristicToRead = characteristicsArray.find(
-    (char) => char.uuid === targetUUID
-  );
-
-  if (!characteristicToRead) {
-    console.log(`Characteristic with UUID ${targetUUID} not found!`);
-    return;
-  }
-
-  // Read the value from the found characteristic
-  characteristicToRead
-    .readValue()
-    .then((value) => {
-      const decoder = new TextDecoder();
-      const receivedData = decoder.decode(value);
-
-      document.getElementById("center-image").src = receivedData;
-      console.log(`Data received from UUID ${targetUUID}: ${receivedData}`);
-    })
-    .catch((error) => {
-      console.error("Error reading characteristic:", error);
-    });
-}
-
 function writeCharacteristic(targetUUID, data) {
   if (!characteristicsArray || characteristicsArray.length === 0) {
     console.log("No characteristics available!");
@@ -210,10 +187,20 @@ function writeCharacteristic(targetUUID, data) {
 }
 
 function connect() {
-  connectToBLEDevice(() => {
-    // readCharacteristic("00001997-0000-1000-8000-00805f9b34fb");
-    // readURLCharacteristic(URLCharacteristic_uuid);
+  connectToBLEDevice(async () => {
+    let receivedData = await readCharacteristic(onLoadCharacteristic_uuid);
 
+    let speedValue = receivedData.split(",")[0]; // Assuming the first part is the speed value
+
+    const speedValueDisplay = document.getElementById("speedValue");
+    speedValueDisplay.textContent = `${speedValue}`;
+    const speedSlider = document.getElementById("speedSlider");
+    speedSlider.value = speedValue;
+
+    const enablePerfume = document.getElementById("enablePerfume");
+    enablePerfume.checked = receivedData.split(",")[1] === "1"; // Assuming the second part is the perfume status
+
+    // Hide the connection container after successful connection
     const connectionContainer = document.querySelector(".connection-container");
     connectionContainer.style.display = "none";
     console.log("Device connected successfully!");
