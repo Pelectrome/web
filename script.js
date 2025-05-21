@@ -137,15 +137,15 @@ async function connectToBLEDevice(callback) {
             handleNotifications
           );
           console.log(
-            `✅ Subscribed to notifications for: ${targetCharacteristic.uuid}`
+            `Subscribed to notifications for: ${targetCharacteristic.uuid}`
           );
           // Optional delay to help slower devices
           await new Promise((resolve) => setTimeout(resolve, 200));
         } catch (err) {
-          console.error(`❌ Error subscribing to ${uuid}:`, err);
+          console.error(`Error subscribing to ${uuid}:`, err);
         }
       } else {
-        console.warn(`⚠️ Characteristic with UUID ${uuid} not found.`);
+        console.warn(`Characteristic with UUID ${uuid} not found.`);
       }
     }
 
