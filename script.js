@@ -197,6 +197,8 @@ function connect() {
     const connectionContainer = document.querySelector(".connection-container");
     connectionContainer.style.display = "none";
     console.log("Device connected successfully!");
+
+    readCharacteristic(CommandsCharacteristic_uuid);
   });
 }
 
