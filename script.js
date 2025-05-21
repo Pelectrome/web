@@ -8,10 +8,12 @@ const CommandsCharacteristic_uuid = "00001996-0000-1000-8000-00805f9b34fb";
 const SpeedCharacteristic_uuid = "00001997-0000-1000-8000-00805f9b34fb";
 const TimerCharacteristic_uuid = "00001998-0000-1000-8000-00805f9b34fb";
 const StatusCharacteristic_uuid = "00001999-0000-1000-8000-00805f9b34fb";
-const onLoadCharacteristic_uuid = "00001990-0000-1000-8000-00805f9b34fb";
 
 // Array of UUIDs to subscribe to
-const targetSubscribeUUIDs = [StatusCharacteristic_uuid];
+const targetSubscribeUUIDs = [
+  CommandsCharacteristic_uuid,
+  StatusCharacteristic_uuid,
+];
 
 function onDisconnected(event) {
   console.log("Device disconnected:", event.target);
@@ -35,6 +37,17 @@ function handleNotifications(event) {
     } else if (receivedData === "1") {
       updateStatus(true);
     }
+  }
+  if (characteristic.uuid === CommandsCharacteristic_uuid) {
+    let receivedData = receivedData;
+    let speedValue = receivedData.split(",")[0]; // Assuming the first part is the speed value
+    const speedValueDisplay = document.getElementById("speedValue");
+    speedValueDisplay.textContent = `${speedValue}`;
+    const speedSlider = document.getElementById("speedSlider");
+    speedSlider.value = speedValue;
+
+    const enablePerfume = document.getElementById("enablePerfume");
+    enablePerfume.checked = receivedData.split(",")[1] === "1"; // Assuming the second part is the perfume status
   }
 
   console.log(
@@ -187,28 +200,11 @@ function writeCharacteristic(targetUUID, data) {
 }
 
 function connect() {
-  connectToBLEDevice(async () => {
-    setTimeout(async () => {
-      try {
-        let receivedData = await readCharacteristic(onLoadCharacteristic_uuid);
-        let speedValue = receivedData.split(",")[0];
-        const speedValueDisplay = document.getElementById("speedValue");
-        speedValueDisplay.textContent = `${speedValue}`;
-        const speedSlider = document.getElementById("speedSlider");
-        speedSlider.value = speedValue;
-
-        const enablePerfume = document.getElementById("enablePerfume");
-        enablePerfume.checked = receivedData.split(",")[1] === "1";
-
-        const connectionContainer = document.querySelector(
-          ".connection-container"
-        );
-        connectionContainer.style.display = "none";
-        console.log("Device connected successfully!");
-      } catch (error) {
-        console.error("Read failed:", error);
-      }
-    }, 500);
+  connectToBLEDevice(() => {
+    // Hide the connection container after successful connection
+    const connectionContainer = document.querySelector(".connection-container");
+    connectionContainer.style.display = "none";
+    console.log("Device connected successfully!");
   });
 }
 
