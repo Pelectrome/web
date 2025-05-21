@@ -202,6 +202,8 @@ function connect() {
       let speedValue = receivedData.split(",")[0]; // Assuming the first part is the speed value
       const speedValueDisplay = document.getElementById("speedValue");
       speedValueDisplay.textContent = `${speedValue}`;
+      const speedSlider = document.getElementById("speedSlider");
+      speedSlider.value = speedValue;
       const enablePerfume = document.getElementById("enablePerfume");
       enablePerfume.checked = receivedData.split(",")[1] === "1";
     });
