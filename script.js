@@ -11,8 +11,8 @@ const StatusCharacteristic_uuid = "00001999-0000-1000-8000-00805f9b34fb";
 
 // Array of UUIDs to subscribe to
 const targetSubscribeUUIDs = [
-  CommandsCharacteristic_uuid,
   StatusCharacteristic_uuid,
+  CommandsCharacteristic_uuid,
 ];
 
 function onDisconnected(event) {
@@ -87,7 +87,6 @@ function readCharacteristic(targetUUID) {
       });
   });
 }
-
 // Connect Button
 function connectToBLEDevice(callback) {
   if (bleDevice) {
