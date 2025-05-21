@@ -88,7 +88,7 @@ function readCharacteristic(targetUUID) {
   });
 }
 // Connect Button
-function connectToBLEDevice(callback) {
+async function connectToBLEDevice(callback) {
   if (bleDevice) {
     bleDevice.gatt.disconnect();
     bleDevice = null;
@@ -101,69 +101,63 @@ function connectToBLEDevice(callback) {
     return;
   }
 
-  navigator.bluetooth
-    .requestDevice({
+  try {
+    const device = await navigator.bluetooth.requestDevice({
       filters: [{ name: deviceName }],
-      // acceptAllDevices: true, // if you want to scan without filter
       optionalServices: [bleService],
-    })
-    .then((device) => {
-      bleDevice = device;
-      const connectionStatus = document.getElementById("connectionStatus");
-      connectionStatus.textContent = "Connecting...";
-      console.log("Connecting to device...");
-      device.addEventListener("gattserverdisconnected", onDisconnected);
-      return device.gatt.connect();
-    })
-    .then((server) => {
-      console.log("Connected!");
-      return server.getPrimaryService(bleService);
-    })
-    .then((service) => {
-      // Retrieve all characteristics from the service
-      return service.getCharacteristics();
-    })
-    .then((characteristics) => {
-      // Store the characteristics in the array
-      characteristicsArray = characteristics;
-      console.log("Characteristics array:", characteristicsArray);
-
-      // Iterate over the array of UUIDs
-      targetSubscribeUUIDs.forEach((uuid) => {
-        const targetCharacteristic = characteristicsArray.find(
-          (char) => char.uuid === uuid
-        );
-        console.log(`tring to Subscribe to characteristic: ${uuid}`);
-
-        if (targetCharacteristic) {
-          targetCharacteristic
-            .startNotifications()
-            .then(() => {
-              targetCharacteristic.addEventListener(
-                "characteristicvaluechanged",
-                handleNotifications
-              );
-              console.log(
-                `Subscribed to notifications for characteristic: ${targetCharacteristic.uuid}`
-              );
-            })
-            .catch((error) => {
-              console.error("Error starting notifications:", error);
-            });
-        } else {
-          console.log(`Characteristic with UUID ${uuid} not found.`);
-        }
-      });
-
-      // Optionally, call the callback function after subscribing
-      if (callback) {
-        callback(); // Call the callback function once all subscriptions are done
-      }
-    })
-    .catch((error) => {
-      console.error("Bluetooth Error:", error);
-      connectionStatus.textContent = "Connection failed!";
     });
+
+    bleDevice = device;
+    const connectionStatus = document.getElementById("connectionStatus");
+    connectionStatus.textContent = "Connecting...";
+    console.log("Connecting to device...");
+    device.addEventListener("gattserverdisconnected", onDisconnected);
+
+    const server = await device.gatt.connect();
+    console.log("Connected!");
+    const service = await server.getPrimaryService(bleService);
+    const characteristics = await service.getCharacteristics();
+
+    characteristicsArray = characteristics;
+    console.log("Characteristics array:", characteristicsArray);
+
+    // Sequential subscription using for...of and await
+    for (const uuid of targetSubscribeUUIDs) {
+      const targetCharacteristic = characteristicsArray.find(
+        (char) => char.uuid.toLowerCase() === uuid.toLowerCase()
+      );
+
+      console.log(`Trying to subscribe to characteristic: ${uuid}`);
+
+      if (targetCharacteristic) {
+        try {
+          await targetCharacteristic.startNotifications();
+          targetCharacteristic.addEventListener(
+            "characteristicvaluechanged",
+            handleNotifications
+          );
+          console.log(
+            `✅ Subscribed to notifications for: ${targetCharacteristic.uuid}`
+          );
+          // Optional delay to help slower devices
+          await new Promise((resolve) => setTimeout(resolve, 200));
+        } catch (err) {
+          console.error(`❌ Error subscribing to ${uuid}:`, err);
+        }
+      } else {
+        console.warn(`⚠️ Characteristic with UUID ${uuid} not found.`);
+      }
+    }
+
+    // Optional callback after successful connection and subscription
+    if (callback) {
+      callback();
+    }
+  } catch (error) {
+    console.error("Bluetooth Error:", error);
+    const connectionStatus = document.getElementById("connectionStatus");
+    connectionStatus.textContent = "Connection failed!";
+  }
 }
 
 function writeCharacteristic(targetUUID, data) {
