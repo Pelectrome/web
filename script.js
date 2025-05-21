@@ -129,14 +129,12 @@ function connectToBLEDevice(callback) {
       console.log("Characteristics array:", characteristicsArray);
 
       // Iterate over the array of UUIDs
-      targetSubscribeUUIDs.forEach((targetSubscribeUUIDs) => {
-        // Find the characteristic that matches the UUID
+      targetSubscribeUUIDs.forEach((uuid) => {
         const targetCharacteristic = characteristicsArray.find(
-          (char) => char.uuid === targetSubscribeUUIDs
+          (char) => char.uuid === uuid
         );
 
         if (targetCharacteristic) {
-          // Start notifications on the characteristic
           targetCharacteristic
             .startNotifications()
             .then(() => {
@@ -152,7 +150,7 @@ function connectToBLEDevice(callback) {
               console.error("Error starting notifications:", error);
             });
         } else {
-          console.log(`Characteristic with UUID ${targetUUID} not found.`);
+          console.log(`Characteristic with UUID ${uuid} not found.`);
         }
       });
 
