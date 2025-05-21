@@ -133,6 +133,7 @@ function connectToBLEDevice(callback) {
         const targetCharacteristic = characteristicsArray.find(
           (char) => char.uuid === uuid
         );
+        console.log(`tring to Subscribe to characteristic: ${uuid}`);
 
         if (targetCharacteristic) {
           targetCharacteristic
